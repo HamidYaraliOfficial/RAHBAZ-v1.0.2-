@@ -1,0 +1,4 @@
+Owner: CN=Hamid Yarali, OU=RAHBAZ, O=Hamid Yarali
+Certificate SHA-256: 6F:31:C0:A4:66:85:87:70:62:00:38:55:CB:05:4F:32:92:E3:4D:18:56:44:5A:31:F9:90:29:5A:B2:A6:E6:B3
+APK SHA-256: f3c88cc70905d8e255aa880b526af24782dceec0d2682cba24ee1609397ba196
+versionName 1.0.2, versionCode 10002

@@ -1,0 +1,22 @@
+{
+  "name": "rahbaz",
+  "productName": "RAHBAZ",
+  "version": "1.0.2",
+  "description": "RAHBAZ (راه‌باز) – Vehicle Logic & Escape. Offline vehicle sliding puzzle for Android.",
+  "author": "Hamid Yarali",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "levels": "node scripts/generate-levels.mjs",
+    "build:web": "node scripts/build-web.mjs",
+    "test": "node --test tests/engine.test.mjs",
+    "test:e2e": "node tests/e2e.mjs",
+    "apk": "node scripts/build-apk.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.2",
+    "es-check": "7.2.1",
+    "jszip": "3.10.1"
+  }
+}

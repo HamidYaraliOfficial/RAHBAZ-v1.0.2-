@@ -1,0 +1,61 @@
+plugins { id 'com.android.application' }
+
+def pkg = new groovy.json.JsonSlurper().parse(file('../../package.json'))
+def (maj, min, pat) = pkg.version.tokenize('.').collect { it as int }
+def keystoreProps = new Properties()
+def kpFile = rootProject.file('../keystore.properties')
+if (kpFile.exists()) keystoreProps.load(new FileInputStream(kpFile))
+def ciStore = System.getenv('ANDROID_KEYSTORE_FILE')
+
+android {
+    namespace 'com.hamidyarali.rahbaz'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.hamidyarali.rahbaz'
+        minSdk 24
+        targetSdk 34
+        versionCode maj * 10000 + min * 100 + pat
+        versionName pkg.version
+    }
+    signingConfigs {
+        release {
+            if (ciStore) {
+                storeFile file(ciStore)
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            } else if (keystoreProps['storeFile']) {
+                storeFile rootProject.file('../' + keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            debuggable false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
+}
+
+// Release builds are refused without a real release key (no silent fallback to the debug key).
+tasks.whenTaskAdded { task ->
+    if (task.name.startsWith('validateSigningRelease') || task.name == 'packageRelease' || task.name == 'bundleRelease') {
+        task.doFirst {
+            def sc = android.signingConfigs.release
+            if (sc.storeFile == null || !sc.storeFile.exists()) throw new GradleException('No release keystore. Run: node scripts/make-keystore.mjs (or set ANDROID_KEYSTORE_* variables in CI).')
+            if (sc.keyAlias?.toLowerCase()?.contains('debug')) throw new GradleException('Refusing to sign with a debug key.')
+        }
+    }
+}
+// Build the web bundle first and copy it to assets/www
+task buildWeb(type: Exec) { workingDir rootProject.file('..'); commandLine 'node', 'scripts/build-web.mjs' }
+task copyWeb(type: Copy) { dependsOn buildWeb; from rootProject.file('../dist/www'); into "$buildDir/generated/assets/www" }
+android.sourceSets.main.assets.srcDirs = ["$buildDir/generated/assets"]
+preBuild.dependsOn copyWeb
